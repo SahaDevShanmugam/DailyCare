@@ -4,9 +4,9 @@ Monitoring and assistance for elderly patients with chronic heart failure.
 
 Core Functions
 
-1. Medication adherence** – Reminders, logging, and safety checks (indications, contraindications, side effects).
-2. Symptom tracking** – Daily symptom and vitals input (BP, heart rate, weight, temperature) with triage for abnormal values.
-3. Lifestyle recommendations – Evidence-based advice from a curated heart-failure knowledge base.
+1. **Medication adherence** – Reminders, logging, and safety checks (indications, contraindications, side effects).
+2. **Symptom tracking** – Daily symptom and vitals input (BP, heart rate, weight, temperature) with triage for abnormal values.
+3. **Lifestyle recommendations** – Evidence-based advice from a curated heart-failure knowledge base.
 
 Architecture
 
