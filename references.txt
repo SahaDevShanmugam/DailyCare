@@ -1,6 +1,4 @@
-================================================================================
 DAILYCARE AGENT – CLINICALLY VALIDATED REFERENCES AND RAG SOURCES
-================================================================================
 
 The DailyCare agent uses a RAG (retrieval-augmented generation) layer over
 clinically validated knowledge. When the vector store is populated, the agent
@@ -9,12 +7,10 @@ keyword-based retrieval from static markdown files. Below we list the free,
 robust clinically validated sources used or intended for RAG, and how each is
 used.
 
---------------------------------------------------------------------------------
 1. FREE CLINICALLY VALIDATED SOURCES FOR RAG
---------------------------------------------------------------------------------
+
 
 A. Medication knowledge – DailyMed / NLM (National Library of Medicine)
--------------------------------------------------------------------------
   What it is:
     DailyMed provides FDA-approved drug labels (Structured Product Labeling, SPL)
     and is maintained by the U.S. National Library of Medicine. It is free and
@@ -42,7 +38,6 @@ A. Medication knowledge – DailyMed / NLM (National Library of Medicine)
 
 
 B. Clinical condition reference – ACC/AHA Heart Failure Guidelines
-------------------------------------------------------------------
   What it is:
     The American College of Cardiology (ACC) and American Heart Association (AHA)
     publish evidence-based heart failure guidelines (e.g. "2022 AHA/ACC/HFSA
@@ -70,7 +65,6 @@ B. Clinical condition reference – ACC/AHA Heart Failure Guidelines
 
 
 C. Clinical condition reference – ESC Heart Failure Guidelines
---------------------------------------------------------------
   What it is:
     The European Society of Cardiology (ESC) publishes heart failure guidelines
     that complement ACC/AHA guidance and are widely used internationally.
@@ -93,7 +87,6 @@ C. Clinical condition reference – ESC Heart Failure Guidelines
 
 
 D. Peer-reviewed literature – PubMed / PubMed Central 
------------------------------------------------------
   What it is:
     PubMed indexes biomedical literature; PubMed Central (PMC) provides full
     text of many articles. NLM provides free APIs (e.g. E-utilities) for
@@ -116,9 +109,7 @@ D. Peer-reviewed literature – PubMed / PubMed Central
     content so that answers can be grounded in both guidelines and
     literature when appropriate.
 
---------------------------------------------------------------------------------
 2. HOW RAG IS IMPLEMENTED IN THE CODEBASE
---------------------------------------------------------------------------------
 
   - Vector store: ChromaDB (persistent under backend/app/knowledge/chroma_db).
   - Embeddings: sentence-transformers (e.g. all-MiniLM-L6-v2) to embed chunks
@@ -145,9 +136,7 @@ D. Peer-reviewed literature – PubMed / PubMed Central
           PDFs) are extracted and ingested
     All sources are chunked and embedded via app.knowledge.rag.add_documents().
 
---------------------------------------------------------------------------------
 3. STATIC FALLBACK SOURCES (when RAG is not populated)
---------------------------------------------------------------------------------
 
   - backend/app/knowledge/hf_guidelines.md
     Content: Heart failure definitions, NYHA stages, symptom patterns,
@@ -164,9 +153,7 @@ D. Peer-reviewed literature – PubMed / PubMed Central
   the initial content ingested by "python -m app.knowledge.ingest" to populate
   RAG.
 
---------------------------------------------------------------------------------
 4. HEART FAILURE RISK SCORE (ML MODEL)
---------------------------------------------------------------------------------
 
   The HF risk score shown on the patient dashboard is computed using a model
   trained on the following clinically validated public dataset:
@@ -195,9 +182,7 @@ D. Peer-reviewed literature – PubMed / PubMed Central
       (downloads the CSV from UCI, trains, saves model.joblib and
       feature_medians.json under backend/app/ml/).
 
---------------------------------------------------------------------------------
 5. SUMMARY
---------------------------------------------------------------------------------
 
   - RAG is implemented and uses free, clinically validated sources (or content
     derived from them): DailyMed/NLM for drug labels; ACC/AHA and ESC for heart
@@ -211,4 +196,3 @@ D. Peer-reviewed literature – PubMed / PubMed Central
   - The HF risk score on the dashboard is powered by the UCI Heart Failure
     Clinical Records Dataset (Chicco & Jurman, 2020); see Section 4.
 
-================================================================================

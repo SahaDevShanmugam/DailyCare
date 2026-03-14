@@ -57,12 +57,12 @@ Then open http://localhost:5173 (or the port shown). The dev server proxies `/ap
 
 **If the assistant says "DailyCare is not connected":** Set either `POE_API_KEY` or `OPENAI_API_KEY` in `backend/.env`. Restart the backend after changing `.env`. Check `GET http://localhost:8000/config/status` — it returns `{"poe_configured": true}` or `{"openai_configured": true}` when a key is loaded.
 
-## Data (from proposal)
+## Data
 
 - **Medical knowledge**: HF definitions/stages, symptom patterns, lifestyle advice, medication indications/contraindications/side effects/frequency.
 - **Patient data**: Conditions, history, diet/hydration/smoking, vitals (BP, HR, weight, temperature).
 
-## Evaluation (from proposal)
+## Evaluation
 
 - HF clinical dataset – risk classification accuracy.
 - Heart failure knowledge / NCLEX-style – response accuracy.
