@@ -1,0 +1,21 @@
+# DailyCare Backend
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.19.0
+greenlet>=3.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+openai>=1.12.0
+httpx>=0.26.0
+
+# RAG over clinically validated sources
+sentence-transformers>=2.2.0
+chromadb>=0.4.0
+pypdf>=4.0.0
+
+# HF risk score (UCI Heart Failure Clinical Records)
+scikit-learn>=1.3.0
+pandas>=2.0.0
+joblib>=1.3.0

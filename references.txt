@@ -1,0 +1,214 @@
+================================================================================
+DAILYCARE AGENT – CLINICALLY VALIDATED REFERENCES AND RAG SOURCES
+================================================================================
+
+The DailyCare agent uses a RAG (retrieval-augmented generation) layer over
+clinically validated knowledge. When the vector store is populated, the agent
+retrieves relevant passages by semantic similarity; otherwise it falls back to
+keyword-based retrieval from static markdown files. Below we list the free,
+robust clinically validated sources used or intended for RAG, and how each is
+used.
+
+--------------------------------------------------------------------------------
+1. FREE CLINICALLY VALIDATED SOURCES FOR RAG
+--------------------------------------------------------------------------------
+
+A. Medication knowledge – DailyMed / NLM (National Library of Medicine)
+-------------------------------------------------------------------------
+  What it is:
+    DailyMed provides FDA-approved drug labels (Structured Product Labeling, SPL)
+    and is maintained by the U.S. National Library of Medicine. It is free and
+    publicly accessible.
+
+  URL / API:
+    https://dailymed.nlm.nih.gov/
+    REST API: https://dailymed.nlm.nih.gov/dailymed/webservices-help/
+    Endpoints include: /drugnames, /spls, /spls/{SETID} for full label content.
+
+  How it is used:
+    Drug labels can be ingested (by drug name or set ID) to populate the RAG
+    store with indications, contraindications, dosing, warnings, and side
+    effects for heart-failure-relevant drugs (e.g. ACE-i, ARBs, beta-blockers,
+    MRAs, SGLT2i, diuretics, digoxin). The ingestion pipeline can fetch labels
+    via the DailyMed API, extract human-readable sections, chunk them, and
+    embed them for semantic retrieval. The agent then uses retrieved chunks to
+    ground answers about medications without inventing information.
+
+  Use in agent:
+    When the user asks about a specific drug or drug class, RAG retrieves the
+    most relevant chunks from ingested labels and passes them as "Relevant
+    medical knowledge" to the LLM, which is instructed to stay within that
+    content and to direct dosing or suitability questions to the care team.
+
+
+B. Clinical condition reference – ACC/AHA Heart Failure Guidelines
+------------------------------------------------------------------
+  What it is:
+    The American College of Cardiology (ACC) and American Heart Association (AHA)
+    publish evidence-based heart failure guidelines (e.g. "2022 AHA/ACC/HFSA
+    Guideline for the Management of Heart Failure"). These define HF stages,
+    NYHA class, treatment algorithms, lifestyle recommendations, and when to
+    escalate care.
+
+  URL / access:
+    https://www.acc.org/ and https://www.heart.org/
+    Guideline PDFs and summaries are often available as free downloads or
+    web pages.
+
+  How it is used:
+    Guideline documents (PDF or HTML) can be downloaded, converted to text,
+    chunked by section, and ingested into the RAG vector store. The agent
+    retrieves relevant sections (e.g. definitions, symptom patterns, diet/fluid,
+    when to seek urgent care) to support answers about heart failure
+    management and to align recommendations with current guidelines.
+
+  Use in agent:
+    Queries about symptoms, lifestyle, diet, fluid, weight, stages, or when to
+    seek care are answered using retrieved guideline-derived chunks, keeping
+    advice within clinically validated guidance and referring to the care team
+    when appropriate.
+
+
+C. Clinical condition reference – ESC Heart Failure Guidelines
+--------------------------------------------------------------
+  What it is:
+    The European Society of Cardiology (ESC) publishes heart failure guidelines
+    that complement ACC/AHA guidance and are widely used internationally.
+
+  URL / access:
+    https://www.escardio.org/
+    Guideline PDFs and related content are often available for free.
+
+  How it is used:
+    As with ACC/AHA, ESC guideline text can be ingested (after download and
+    text extraction) into the RAG store. Chunks cover definitions, staging,
+    lifestyle, and escalation criteria. Retrieval is by semantic similarity to
+    the user query, so the agent can pull in the most relevant ESC (or
+    ACC/AHA) content for the question.
+
+  Use in agent:
+    Same as ACC/AHA: grounds answers about HF condition, symptoms, and
+    self-care in guideline-based content and defers to the care team for
+    individual decisions.
+
+
+D. Peer-reviewed literature – PubMed / PubMed Central 
+-----------------------------------------------------
+  What it is:
+    PubMed indexes biomedical literature; PubMed Central (PMC) provides full
+    text of many articles. NLM provides free APIs (e.g. E-utilities) for
+    programmatic access.
+
+  URL / API:
+    https://pubmed.ncbi.nlm.nih.gov/
+    E-utilities: https://www.ncbi.nlm.nih.gov/books/NBK25501/
+
+  How it is used:
+    For higher robustness, curated queries (e.g. guideline citations, systematic
+    reviews on HF self-care or medication safety) can be used to fetch
+    abstracts or full text, which are then chunked and ingested into RAG. This
+    allows the agent to cite or rely on peer-reviewed evidence when relevant.
+    Optional because it requires careful curation and filtering (e.g. by
+    publication type and relevance) to avoid noise.
+
+  Use in agent:
+    Retrieved abstracts or excerpts can supplement guideline and drug-label
+    content so that answers can be grounded in both guidelines and
+    literature when appropriate.
+
+--------------------------------------------------------------------------------
+2. HOW RAG IS IMPLEMENTED IN THE CODEBASE
+--------------------------------------------------------------------------------
+
+  - Vector store: ChromaDB (persistent under backend/app/knowledge/chroma_db).
+  - Embeddings: sentence-transformers (e.g. all-MiniLM-L6-v2) to embed chunks
+    and the user query.
+  - Retrieval: For each user message, the query is embedded and the top-k
+    most similar chunks are retrieved and concatenated (up to a character
+    limit) and passed to the LLM as "Relevant medical knowledge".
+  - Fallback: If the vector store is empty or RAG fails, the retriever falls
+    back to keyword-based inclusion from the static files hf_guidelines.md and
+    medication_safety.md (see Section 3).
+
+  Populating the store:
+    Run once after installing dependencies:
+      cd backend && python -m app.knowledge.ingest
+    This runs a full ingest that:
+    - Clears the RAG store, then ingests:
+      (1) Local curated markdown (hf_guidelines.md, medication_safety.md)
+      (2) Drug labels: OpenFDA API (or DailyMed NLM API as fallback) for HF-relevant
+          drugs (e.g. furosemide, ACE-i, beta-blockers, MRAs, SGLT2i, digoxin)
+      (3) PubMed: abstracts for key HF guideline PMIDs (e.g. 2022 AHA/ACC/HFSA,
+          ESC 2021, comparison reviews) via NCBI E-utilities efetch
+      (4) Local guideline files: any .pdf, .txt, or .md in
+          backend/app/knowledge/sources/guidelines/ (e.g. downloaded ACC/AHA or ESC
+          PDFs) are extracted and ingested
+    All sources are chunked and embedded via app.knowledge.rag.add_documents().
+
+--------------------------------------------------------------------------------
+3. STATIC FALLBACK SOURCES (when RAG is not populated)
+--------------------------------------------------------------------------------
+
+  - backend/app/knowledge/hf_guidelines.md
+    Content: Heart failure definitions, NYHA stages, symptom patterns,
+    lifestyle (diet, fluid, activity, weight, smoking, vaccinations), when to
+    seek urgent care. Aligned with ACC/AHA/ESC-style guidance.
+
+  - backend/app/knowledge/medication_safety.md
+    Content: Common HF drug classes (ACE-i/ARBs, beta-blockers, MRAs, SGLT2i,
+    diuretics, digoxin) with indications, cautions, contraindications, and
+    general safety. Aligned with drug-label and guideline-based information.
+
+  These files are used by the retriever when the ChromaDB collection is empty
+  or when RAG is unavailable (keyword-based inclusion). They also serve as
+  the initial content ingested by "python -m app.knowledge.ingest" to populate
+  RAG.
+
+--------------------------------------------------------------------------------
+4. HEART FAILURE RISK SCORE (ML MODEL)
+--------------------------------------------------------------------------------
+
+  The HF risk score shown on the patient dashboard is computed using a model
+  trained on the following clinically validated public dataset:
+
+  Dataset name: UCI Heart Failure Clinical Records Dataset
+  Citation: Chicco D, Jurman G. Machine learning can predict survival of
+    patients with heart failure from serum creatinine and ejection fraction
+    alone. BMC Medical Informatics and Decision Making. 2020;20(1):16.
+  URL: https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records
+  CSV: https://archive.ics.uci.edu/ml/machine-learning-databases/00519/
+       heart_failure_clinical_records_dataset.csv
+  Content: 299 patients with heart failure; 12 clinical features (age, anaemia,
+    creatinine_phosphokinase, diabetes, ejection_fraction, high_blood_pressure,
+    platelets, serum_creatinine, serum_sodium, sex, smoking, time) and binary
+    outcome DEATH_EVENT. No missing values. CC BY 4.0.
+
+  How it is used in DailyCare:
+    - Backend runs a logistic regression model (trained on this dataset) to
+      output a 0–100 risk score and tier (low / moderate / high) from the
+      patient’s profile (age, sex when available) and recent vitals/symptoms.
+    - Features not available in the app (e.g. serum creatinine, ejection
+      fraction) are imputed with training-set medians so the model can run;
+      high_blood_pressure is derived from recent systolic BP when available.
+    - The score is for informational use only and is not a medical device.
+    - To train or retrain: cd backend && python -m app.ml.train_hf_risk
+      (downloads the CSV from UCI, trains, saves model.joblib and
+      feature_medians.json under backend/app/ml/).
+
+--------------------------------------------------------------------------------
+5. SUMMARY
+--------------------------------------------------------------------------------
+
+  - RAG is implemented and uses free, clinically validated sources (or content
+    derived from them): DailyMed/NLM for drug labels; ACC/AHA and ESC for heart
+    failure guidelines; optionally PubMed/PMC for literature.
+  - Current ingestion (python -m app.knowledge.ingest) loads local .md files,
+    OpenFDA/DailyMed drug labels, PubMed abstracts for key PMIDs, and any
+    PDF/txt/md files in app/knowledge/sources/guidelines/, so all four
+    clinically validated source types are integrated into the RAG layer.
+  - The agent is instructed to base advice only on the retrieved (or fallback)
+    knowledge and to direct users to their care team when appropriate.
+  - The HF risk score on the dashboard is powered by the UCI Heart Failure
+    Clinical Records Dataset (Chicco & Jurman, 2020); see Section 4.
+
+================================================================================
