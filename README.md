@@ -1,299 +1,174 @@
-DailyCare – Homecare AI for Elderly Chronic Heart Failure
+# DailyCare – Homecare AI for Elderly Chronic Heart Failure
 
-DailyCare is a homecare AI assistant designed to support elderly patients with chronic heart failure (HF).
-It provides daily monitoring, medication adherence support, and personalized guidance through a conversational AI interface.
+**DailyCare** is a homecare AI assistant for elderly patients with chronic heart failure. It supports day‑to‑day monitoring and guidance through:
 
-The system combines machine learning risk prediction, clinical triage rules, and a retrieval-augmented LLM assistant grounded in heart-failure medical guidelines.
+- **Medication adherence**: reminders, logging, and basic safety checks (indications, contraindications, side effects).
+- **Symptom and vitals tracking**: daily input of blood pressure, heart rate, weight, temperature with triage for abnormal values.
+- **Lifestyle recommendations**: evidence-based advice from a curated heart‑failure knowledge base.
+- **Risk scoring**: ML-based heart‑failure risk estimate adjusted by current vitals.
+- **Conversational agent**: RAG‑augmented cloud LLM for personalized, context‑aware responses.
 
-Key Features
-Medication Adherence
+---
 
-Medication reminders and logging
+## 1. Installation
 
-Safety checks (indications, contraindications, side effects)
+### 1.1 Prerequisites
 
-Adherence tracking and history
+- **Python** ≥ 3.10 (backend)
+- **Node.js** ≥ 18 and **npm** (frontend)
+- **Git** (optional but recommended)
 
-Vitals & Symptom Monitoring
+### 1.2 Clone the repository
 
-Daily input of:
-
-Blood pressure
-
-Heart rate
-
-Weight
-
-Temperature
-
-Free-text symptom tracking
-
-Automatic triage of abnormal values
-
-Lifestyle Guidance
-
-Evidence-based recommendations
-
-Low-sodium diet suggestions
-
-Fluid management guidance
-
-Lifestyle advice from a curated HF knowledge base
-
-Risk Scoring
-
-ML-based heart-failure risk score
-
-Logistic regression model trained on the UCI Heart Failure dataset
-
-Risk score adjusted using current vital signs
-
-Conversational AI Agent
-
-RAG-augmented cloud LLM
-
-Personalized responses based on patient history
-
-Medication questions
-
-Symptom monitoring advice
-
-Lifestyle recommendations
-
-System Architecture
-
-DailyCare consists of:
-
-Frontend: React + Vite dashboard
-
-Backend: FastAPI service
-
-Database: SQLite (default)
-
-Machine Learning: Scikit-learn logistic regression model
-
-AI Assistant: Cloud LLM via Poe API or OpenAI
-
-Knowledge Layer: Heart failure guidelines and medication references
-
-Installation
-Prerequisites
-
-Python ≥ 3.10 (backend)
-
-Node.js ≥ 18 and npm (frontend)
-
-Git (optional but recommended)
-
-Clone the Repository
+```bash
 git clone https://github.com/SahaDevShanmugam/DailyCare.git
 cd DailyCare
-Backend Setup
+```
 
-Navigate to the backend folder:
+### 1.3 Backend dependencies
 
+From the project root:
+
+```bash
 cd backend
-Create Virtual Environment
+
+# Create and activate virtual environment
 python -m venv .venv
+source .venv/bin/activate        # On Windows: .venv\Scripts\activate
 
-Activate it:
-
-Mac/Linux:
-
-source .venv/bin/activate
-
-Windows:
-
-.venv\Scripts\activate
-Install Dependencies
+# Install Python dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
-Backend Environment Variables
+```
 
-Create an environment file:
+Create your backend environment file:
 
+```bash
 cp .env.example .env
+```
 
-Edit .env and configure at least one LLM provider.
+Then edit `.env` to set at least one LLM provider:
 
-Poe API (recommended)
-POE_API_KEY=your_key_here
-POE_MODEL=Claude-Sonnet-4
-OpenAI (fallback if Poe is not configured)
-OPENAI_API_KEY=your_key_here
-OPENAI_BASE_URL=https://api.openai.com/v1
-Database (optional)
-DATABASE_URL=sqlite:///./dailycare.db
-Frontend Setup
+- **Poe (takes precedence if set):**
+  - `POE_API_KEY` – get from `poe.com/api_key`
+  - `POE_MODEL` (optional) – e.g. `Claude-Sonnet-4`, `gpt-4o`, `Gemini-1.5-Pro`
+- **OpenAI (used if Poe is not set):**
+  - `OPENAI_API_KEY`
+  - `OPENAI_BASE_URL` (optional, default `https://api.openai.com/v1`)
+- **Database (optional):**
+  - `DATABASE_URL` (defaults to `sqlite:///./dailycare.db`)
 
-Navigate to the frontend folder:
+### 1.4 Frontend dependencies
 
+From the project root:
+
+```bash
 cd frontend
 npm install
+```
 
-Optional environment file:
+Optional `frontend/.env`:
 
-frontend/.env
-
+```bash
+# default is /api, proxied to backend in dev
 VITE_API_URL=/api
+```
 
-This proxies requests to the backend during development.
+---
 
-Running the System
-Start the Backend
+## 2. Running the system
 
-From backend/ with the virtual environment activated:
+### 2.1 Start the backend (FastAPI)
 
+From `backend/` with the virtual environment activated:
+
+```bash
 uvicorn app.main:app --reload
+```
 
-Backend URLs:
+- API base URL: `http://localhost:8000`
+- Docs (OpenAPI/Swagger): `http://localhost:8000/docs`
+- LLM configuration status: `http://localhost:8000/config/status`  
+  (returns `{"poe_configured": true}` or `{"openai_configured": true}` when a key is loaded)
 
-Service	URL
-API	http://localhost:8000
+If the assistant says **“DailyCare is not connected”**:
 
-Swagger Docs	http://localhost:8000/docs
+- Ensure `POE_API_KEY` **or** `OPENAI_API_KEY` is set in `backend/.env`.
+- Restart the backend after editing `.env`.
 
-LLM Config Status	http://localhost:8000/config/status
+### 2.2 Start the frontend (React/Vite)
 
-Example response:
+In a separate terminal:
 
-{"poe_configured": true}
-
-If the assistant reports "DailyCare is not connected", ensure:
-
-POE_API_KEY or OPENAI_API_KEY is set
-
-Backend was restarted after editing .env
-
-Start the Frontend
-
-In another terminal:
-
+```bash
 cd frontend
 npm run dev
+```
 
-Default URL:
+By default Vite runs at `http://localhost:5173` (or another port if 5173 is taken; the URL is printed in the terminal).
 
-http://localhost:5173
+- `/api` is proxied to `http://localhost:8000` in development.
+- If your backend runs elsewhere, set `VITE_API_URL` in `frontend/.env`.
 
-All /api calls are automatically proxied to the backend.
+Open the printed URL in your browser to access the DailyCare dashboard.
 
-Example Usage
-First-Time Setup
+---
 
-Start the backend (uvicorn)
+## 3. Example usage
 
-Start the frontend (npm run dev)
+### 3.1 First‑time setup
 
-Open the dashboard in your browser
+1. Start the **backend** (`uvicorn`) and **frontend** (`npm run dev`).
+2. Open the dashboard in a browser (e.g. `http://localhost:5173`).
+3. Verify LLM configuration via `http://localhost:8000/config/status`.
 
-Confirm an LLM provider is configured (/config/status)
+### 3.2 Typical patient workflow
 
-Typical Patient Workflow
-1. Log Medications
+- **Medication adherence**
+  - Add HF medications (e.g. furosemide, ACE inhibitor) with time‑of‑day labels such as “after breakfast” or “evening”.
+  - The dashboard:
+    - Shows upcoming doses.
+    - Highlights doses that are currently due.
+    - Displays an in‑app **medication reminder banner** at the appropriate time window.
 
-Add heart failure medications such as:
+- **Vitals and symptom tracking**
+  - Enter:
+    - Blood pressure (systolic/diastolic)
+    - Heart rate
+    - Weight
+    - Temperature
+  - Optionally add free‑text symptoms (e.g. shortness of breath, swelling).
+  - The **triage engine** classifies each reading as *normal*, *warning*, or *critical* and creates alerts for severe abnormalities.
 
-Furosemide
+- **Risk score and health status**
+  - A logistic regression model trained on the UCI Heart Failure dataset produces a 0–100 risk score.
+  - The score is adjusted using the latest vitals via the triage engine and categorized as **low**, **moderate**, or **high**.
+  - The **Health Status** panel shows:
+    - Current risk tier.
+    - A short, personalized daily recommendation grounded in vitals, symptoms, meds, and guideline-based knowledge.
 
-ACE inhibitors
+- **Conversational assistant**
+  - Use the chat interface to ask about:
+    - Medications (interactions, side effects).
+    - Symptoms (“Should I worry about this weight gain?”).
+    - Lifestyle (sodium, fluids, exercise).
+  - The backend:
+    - Retrieves relevant clinical content from the **RAG + knowledge layer**.
+    - Builds a structured **patient context**.
+    - Calls the configured **cloud LLM** to generate grounded, personalized replies.
 
-Beta blockers
+- **Data export for clinicians**
+  - Export the patient’s history as a password‑protected ZIP of CSV files:
+    - Vitals, symptoms, medications, adherence logs.
+  - Intended for clinician review, research, or import into external tools.
 
-Features:
+---
 
-Time-of-day labels (morning / evening / night)
+## 4. Evaluation (summary)
 
-Medication reminder banners
+- **Heart failure risk score**  
+  Logistic regression trained on the UCI Heart Failure Clinical Records dataset, evaluated with 80/20 train–test split and standard accuracy on the held‑out test set.
 
-Dose confirmation logging
+- **Knowledge and reasoning**  
+  Heart‑failure knowledge / NCLEX‑style questions evaluated via response accuracy and explanation quality in a small benchmark of HF management questions.
 
-2. Enter Vitals & Symptoms
-
-Patients enter:
-
-Blood pressure
-
-Heart rate
-
-Weight
-
-Temperature
-
-Optional symptom entry:
-
-shortness of breath
-leg swelling
-fatigue
-
-The triage engine classifies readings as:
-
-Normal
-
-Warning
-
-Critical
-
-Severe abnormalities generate alerts.
-
-3. View Risk Score & Health Status
-
-The system calculates a 0–100 heart failure risk score using:
-
-Logistic regression ML model
-
-Latest vital signs
-
-Triage rule adjustments
-
-The dashboard shows:
-
-Colored risk indicator
-
-Health status summary
-
-Personalized daily recommendations
-
-4. Ask the AI Assistant
-
-Patients can ask questions such as:
-
-“Can I take these medications together?”
-
-“Should I worry about my weight gain?”
-
-“What foods should I avoid with heart failure?”
-
-The backend:
-
-Retrieves medical context from the RAG knowledge base
-
-Builds a structured patient context
-
-Calls the configured cloud LLM
-
-Returns a grounded, personalized response
-
-5. Export Data for Clinicians
-
-Patient data can be exported as:
-
-Password-protected ZIP
-
-Contains CSV files for:
-
-vitals
-
-symptoms
-
-medications
-
-adherence logs
-
-Use cases:
-
-Clinician review
-
-Research analysis
-
-Clinical documentation
