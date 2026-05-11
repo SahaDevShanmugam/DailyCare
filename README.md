@@ -1,6 +1,6 @@
 # DailyCare – Homecare AI for Elderly Chronic Heart Failure
 
-Video Demonstration: https://drive.google.com/file/d/1n-X6mm WasLtQqttxGSN0ARe_cLlSpQJu/view?usp=sharing
+Video Demonstration: https://drive.google.com/file/d/1n-X6mmWasLtQqttxGSN0ARe_cLlSpQJu/view?usp=sharing
 
 **DailyCare** is a homecare AI assistant for elderly patients with chronic heart failure. It supports day‑to‑day monitoring and guidance through:
 
